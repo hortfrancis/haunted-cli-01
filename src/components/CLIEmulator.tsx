@@ -1,11 +1,28 @@
 import { useState, useRef, useEffect } from 'react';
 import './CLIEmulator.css';
 
+interface FileSystemItem {
+  type: 'file' | 'dir';
+  children?: string[];
+  content?: string;
+}
+
+interface FileSystem {
+  [path: string]: FileSystemItem;
+}
+
+interface HistoryEntry {
+  cmd: string;
+  cwd: string;
+  result?: string;
+  ghost?: boolean;
+}
+
 const CLIEmulator = () => {
-  const [history, setHistory] = useState([]);
-  const [input, setInput] = useState('');
-  const [cwd, setCwd] = useState('/home/user');
-  const [fileSystem, setFileSystem] = useState({
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [input, setInput] = useState<string>('');
+  const [cwd, setCwd] = useState<string>('/home/user');
+  const [fileSystem, setFileSystem] = useState<FileSystem>({
     '/': {
       type: 'dir',
       children: ['home', 'etc', 'var']
@@ -67,9 +84,9 @@ const CLIEmulator = () => {
       content: '[2025-10-13 10:00:00] System started\n[2025-10-13 10:01:23] User logged in'
     }
   });
-  const [glitchText, setGlitchText] = useState('');
-  const inputRef = useRef(null);
-  const terminalRef = useRef(null);
+  const [glitchText, setGlitchText] = useState<string>('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
   const hauntedMessages = [
     'help me',
@@ -84,7 +101,7 @@ const CLIEmulator = () => {
     'ERROR: ENTITY_NOT_FOUND'
   ];
 
-  const corruptText = (text) => {
+    const corruptText = (text: string): string => {
     const glitchChars = '!@#$%^&*()_+-=[]{}|;:,.<>?~`';
     let corrupted = '';
     for (let i = 0; i < text.length; i++) {
@@ -97,7 +114,7 @@ const CLIEmulator = () => {
     return corrupted;
   };
 
-  const addGhostFile = () => {
+  const addGhostFile = (): string => {
     const ghostFiles = [
       { path: '/home/user/WHO_AM_I.txt', content: 'You should not have opened this.\n\nI have been waiting.\n\n...waiting for you.' },
       { path: '/home/user/documents/HELP.txt', content: 'HELP HELP HELP HELP HELP\nHELP HELP HELP HELP HELP\nHELP HELP HELP HELP HELP' },
@@ -112,10 +129,10 @@ const CLIEmulator = () => {
 
     setFileSystem(prev => {
       const newFs = { ...prev };
-      if (newFs[dirPath] && !newFs[dirPath].children.includes(fileName)) {
+      if (newFs[dirPath] && !newFs[dirPath].children?.includes(fileName)) {
         newFs[dirPath] = {
           ...newFs[dirPath],
-          children: [...newFs[dirPath].children, fileName]
+          children: [...(newFs[dirPath].children || []), fileName]
         };
         newFs[ghost.path] = {
           type: 'file',
@@ -128,7 +145,7 @@ const CLIEmulator = () => {
     return ghost.path;
   };
 
-  const removeRandomFile = () => {
+  const removeRandomFile = (): void => {
     const paths = Object.keys(fileSystem).filter(p => 
       fileSystem[p].type === 'file' && !p.includes('WHO_AM_I') && !p.includes('HELP')
     );
@@ -142,7 +159,7 @@ const CLIEmulator = () => {
         if (newFs[dirPath]) {
           newFs[dirPath] = {
             ...newFs[dirPath],
-            children: newFs[dirPath].children.filter(f => f !== fileName)
+            children: newFs[dirPath]?.children?.filter((f: string) => f !== fileName) || []
           };
           delete newFs[toRemove];
         }
@@ -151,7 +168,7 @@ const CLIEmulator = () => {
     }
   };
 
-  const hauntedEvent = () => {
+  const hauntedEvent = (): void => {
     const events = [
       () => {
         // Ghost command
@@ -224,7 +241,7 @@ const CLIEmulator = () => {
     };
   }, [fileSystem]);
 
-  const resolvePath = (path) => {
+  const resolvePath = (path: string): string => {
     if (path.startsWith('/')) {
       return path;
     }
@@ -239,12 +256,12 @@ const CLIEmulator = () => {
     return cwd === '/' ? `/${path}` : `${cwd}/${path}`;
   };
 
-  const executeCommand = (cmd, isGhost = false) => {
+  const executeCommand = (cmd: string, isGhost: boolean = false): void => {
     const parts = cmd.trim().split(/\s+/);
     const command = parts[0];
     const args = parts.slice(1);
 
-    const output = { cmd, cwd, ghost: isGhost };
+    const output: HistoryEntry = { cmd, cwd, ghost: isGhost };
 
     switch (command) {
       case 'ls':
@@ -255,7 +272,7 @@ const CLIEmulator = () => {
         } else if (lsDir.type !== 'dir') {
           output.result = args[0] || lsPath.split('/').pop();
         } else {
-          output.result = lsDir.children.join('  ');
+          output.result = lsDir.children?.join('  ') || '';
         }
         break;
 
@@ -322,7 +339,7 @@ const CLIEmulator = () => {
     setHistory(prev => [...prev, output]);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       if (input.trim()) {
         executeCommand(input);
