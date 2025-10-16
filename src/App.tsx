@@ -1,14 +1,9 @@
-
-import './App.css'
+import CLIEmulator from './components/CLIEmulator'
 
 function App() {
-
-
   return (
     <>
-      <div>
-        <h1>haunted-cli-01</h1>
-      </div>
+      <CLIEmulator />
     </>
   )
 }
