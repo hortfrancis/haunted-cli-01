@@ -360,7 +360,7 @@ const CLIEmulator = () => {
 
   return (
     <div 
-      className="cli-container"
+      className="cli cli-container"
       onClick={() => inputRef.current?.focus()}
     >
       {glitchText && (
